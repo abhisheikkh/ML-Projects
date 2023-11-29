@@ -3,14 +3,25 @@ import pickle
 import pandas as pd
 import requests
 
+# Fetch API key from secrets
+tmdb_api_key = st.secrets["tmdb_api_key"]
+
+# Load paths from secrets
+model_pickle_path = st.secrets["model_pickle_path"]
+similarity_pickle_path = st.secrets["similarity_pickle_path"]
+
+# Load your pickled files
+movies_dict = pickle.load(open(model_pickle_path, 'rb'))
+movies = pd.DataFrame(movies_dict)
+
+similarity = pickle.load(open(similarity_pickle_path, 'rb'))
 
 def fetch_poster(movie_id):
     response = requests.get(
-        'https://api.themoviedb.org/3/movie/{}?api_key=8265bd1679663a7ea12ac168da84d2e8&language=en-US'.format(
-            movie_id))
+        f'https://api.themoviedb.org/3/movie/{movie_id}?api_key={tmdb_api_key}&language=en-US'
+    )
     data = response.json()
     return "https://image.tmdb.org/t/p/w500/" + data['poster_path']
-
 
 def recommend(movie):
     movie_index = movies[movies['title'] == movie].index[0]
@@ -25,11 +36,6 @@ def recommend(movie):
         recommended_movies_posters.append(fetch_poster(movie_id))
     return recommended_movies, recommended_movies_posters
 
-
-movies_dict = pickle.load(open('movie_dict.pkl', 'rb'))
-movies = pd.DataFrame(movies_dict)
-
-similarity = pickle.load(open('similarity.pkl', 'rb'))
 st.title('Movie-Recommender-System')
 selected_movie_name = st.selectbox(
     'Select a movie to recommend',
@@ -60,7 +66,7 @@ if st.button('Recommend'):
     with col4:
         st.text(names[3])
         st.image(posters[3], use_column_width=True, width=100)
-        
+
     with col5:
         st.text(names[4])
         st.image(posters[4], use_column_width=True, width=100)
